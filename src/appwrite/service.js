@@ -3,11 +3,20 @@ import conf from '../conf/conf';
 
 class AppwriteService {
   constructor() {
-    this.client = new Client()
-      .setEndpoint(conf.appwriteUrl)
-      .setProject(conf.appwriteProjectId);
-    this.databases = new Databases(this.client);
-    this.storage   = new Storage(this.client);
+    const endpoint = conf.appwriteUrl || "";
+
+this.client = new Client();
+
+if (endpoint) {
+  this.client.setEndpoint(endpoint);
+} else {
+  console.warn("[AppwriteService] VITE_APPWRITE_URL missing — endpoint not set");
+}
+
+if (conf.appwriteProjectId) {
+  this.client.setProject(conf.appwriteProjectId);
+}
+
   }
 
   // — File upload & preview URL —
