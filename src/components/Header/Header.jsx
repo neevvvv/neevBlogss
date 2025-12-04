@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -25,7 +25,40 @@ export default function Header() {
   // Pull username + avatar file ID out of Redux
   const userName = auth.userData?.name;
   const userPhotoId = auth.userData?.prefs?.profileImage;
-  const userPhotoUrl = userPhotoId ? appService.getFileView(userPhotoId) : null;
+
+  // Load avatar URL after ensuring appService.storage is initialized
+  const [userPhotoUrl, setUserPhotoUrl] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAvatar = async () => {
+      try {
+        // Defensive: ensure storage is available and method exists
+        if (
+          appService &&
+          appService.storage &&
+          typeof appService.getFileView === "function"
+        ) {
+          const url = appService.getFileView(userPhotoId);
+          if (mounted) setUserPhotoUrl(url || null);
+        } else {
+          // storage not ready yet
+          if (mounted) setUserPhotoUrl(null);
+        }
+      } catch (err) {
+        console.error("getFileView error", err);
+        if (mounted) setUserPhotoUrl(null);
+      }
+    };
+
+    if (userPhotoId) loadAvatar();
+    else setUserPhotoUrl(null);
+
+    return () => {
+      mounted = false;
+    };
+  }, [userPhotoId]);
 
   const handleLogout = async () => {
     try {
@@ -81,7 +114,7 @@ export default function Header() {
           {auth.status && (
             <Stack direction="row" alignItems="center" spacing={1}>
               <Avatar
-                src={userPhotoUrl}
+                src={userPhotoUrl || undefined}
                 alt={userName}
                 sx={{ width: 32, height: 32 }}
               >
