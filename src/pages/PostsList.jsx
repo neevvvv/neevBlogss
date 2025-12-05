@@ -11,7 +11,6 @@ import {
   Pagination,
   TextField,
   Fab,
-  Skeleton,
   Avatar,
   Alert,
   Fade,
@@ -44,7 +43,7 @@ export default function PostsList({ ownOnly = false }) {
           filters.unshift(Query.equal("userid", user.$id));
         } else {
           // no user yet, no own posts
-          filters.push(Query.equal("userid", "__none__"));
+          filters.push(Query.equal("userid", "_none_"));
         }
       }
       const docs = await appService.getPosts(filters);
@@ -65,7 +64,9 @@ export default function PostsList({ ownOnly = false }) {
 
   const filtered = useMemo(
     () =>
-      posts.filter((p) => p.title.toLowerCase().includes(search.toLowerCase())),
+      posts.filter((p) =>
+        p.title ? p.title.toLowerCase().includes(search.toLowerCase()) : false
+      ),
     [posts, search]
   );
   const pageCount = Math.ceil(filtered.length / perPage);
@@ -119,6 +120,8 @@ export default function PostsList({ ownOnly = false }) {
     );
   }
 
+  const itemsToRender = loading ? [null] : slice;
+
   return (
     <Box sx={{ pt: 10, px: 2, textAlign: "center" }}>
       <TextField
@@ -134,9 +137,9 @@ export default function PostsList({ ownOnly = false }) {
       />
 
       <Grid container spacing={2} justifyContent="center" alignItems="stretch">
-        {(loading ? Array(perPage).fill(null) : slice).map((p, i) => (
+        {itemsToRender.map((p, i) => (
           <Grid
-            key={p?.$id ?? i}
+            key={p?.$id ?? `placeholder-${i}`}
             item
             xs={12}
             sm={6}
@@ -145,7 +148,9 @@ export default function PostsList({ ownOnly = false }) {
             sx={{ display: "flex", justifyContent: "center" }}
           >
             {loading ? (
-              <Skeleton variant="rectangular" width={280} height={350} />
+              <Typography variant="h6" noWrap>
+                Please sign up first!
+              </Typography>
             ) : (
               <Card
                 onClick={() => nav(`/post/${p.slug}`)}
@@ -225,6 +230,7 @@ export default function PostsList({ ownOnly = false }) {
         onChange={(_, v) => setPage(v)}
         color="primary"
         sx={{ mt: 3 }}
+        disabled={loading}
       />
 
       <Fab
